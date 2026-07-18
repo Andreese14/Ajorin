@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>My Profile — Ajorin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink:#0B0B0F; --paper:#F7F4EE; --terra:#5C5CA8; --gold:#B8963E;
+  --mist:#E2DDD5; --fog:#9E9A93; --white:#FFFFFF;
+  --serif:'Cormorant Garamond',Georgia,serif; --sans:'DM Sans',system-ui,sans-serif; --mono:'DM Mono',monospace;
+}
+body { background:var(--ink); color:var(--white); font-family:var(--sans); font-size:16px; line-height:1.6; }
+
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:200;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:1.2rem 2.5rem; background:rgba(11,11,15,0.85);
+  backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.nav-logo-group { display:flex; flex-direction:column; gap:0.35rem; }
+.nav-logo { font-family:var(--serif); font-size:1.65rem; font-weight:600; letter-spacing:0.06em; color:var(--white); text-decoration:none; line-height:1; }
+.nav-logo span { color:var(--terra); }
+.nav-sublinks { display:flex; flex-wrap:wrap; align-items:center; gap:0.4rem 0.6rem; font-family:var(--mono); font-size:0.6rem; letter-spacing:0.08em; text-transform:uppercase; }
+.nav-sublinks a { color:rgba(255,255,255,0.5); text-decoration:none; transition:color 0.2s; white-space:nowrap; }
+.nav-sublinks a:hover { color:var(--terra); }
+.nav-sublinks span { color:rgba(255,255,255,0.2); }
+.nav-cta { font-family:var(--sans); font-size:0.75rem; font-weight:500; letter-spacing:0.12em; text-transform:uppercase; color:var(--white); background:var(--terra); padding:0.65rem 1.5rem; border-radius:2px; text-decoration:none; transition:background 0.2s; }
+.nav-cta:hover { background:#4a4a8f; }
+
+.wrap { max-width:640px; margin:0 auto; padding:8rem 1.5rem 4rem; }
+
+.hdr { text-align:center; margin-bottom:2.5rem; }
+.hdr-eyebrow { font-family:var(--mono); font-size:0.62rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--terra); margin-bottom:1rem; }
+.hdr-title { font-family:var(--serif); font-size:clamp(1.9rem,5.5vw,2.6rem); font-weight:300; }
+.hdr-title em { font-style:italic; color:var(--terra); }
+.hdr-sub { font-size:0.9rem; color:rgba(255,255,255,0.5); margin-top:0.8rem; }
+
+.field-card {
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12);
+  border-radius:10px; padding:1.1rem 1.3rem; margin-bottom:0.8rem;
+}
+.field-lbl { font-family:var(--mono); font-size:0.58rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--terra); margin-bottom:0.4rem; }
+.field-val { font-family:var(--serif); font-size:1.05rem; color:var(--white); line-height:1.4; }
+.field-val.empty { color:rgba(255,255,255,0.3); font-style:italic; }
+
+.section-label { font-family:var(--mono); font-size:0.6rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--gold); margin:2rem 0 1rem; text-align:center; }
+
+.action-row { display:flex; gap:0.8rem; justify-content:center; flex-wrap:wrap; margin-top:2.5rem; }
+.btn-primary {
+  font-family:var(--sans); font-size:0.8rem; font-weight:500; letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--white); background:var(--terra); padding:0.9rem 2rem; border:none; border-radius:2px;
+  cursor:pointer; text-decoration:none; display:inline-block; transition:background 0.2s;
+}
+.btn-primary:hover { background:#4a4a8f; }
+.btn-secondary {
+  font-family:var(--sans); font-size:0.8rem; font-weight:500; letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--white); background:transparent; border:1px solid rgba(255,255,255,0.3); padding:0.9rem 2rem;
+  border-radius:2px; cursor:pointer; text-decoration:none; display:inline-block; transition:border-color 0.2s;
+}
+.btn-secondary:hover { border-color:var(--terra); color:var(--terra); }
+
+.loading-msg { text-align:center; color:rgba(255,255,255,0.4); font-family:var(--mono); font-size:0.75rem; margin-top:3rem; }
+
+footer {
+  padding:2.5rem 2.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;
+  border-top:1px solid rgba(255,255,255,0.12); background:var(--ink); margin-top:3rem;
+}
+.footer-logo { font-family:var(--serif); font-size:1.3rem; font-weight:600; letter-spacing:0.05em; color:var(--white); }
+.footer-logo span { color:var(--terra); }
+.footer-tag { font-family:var(--mono); font-size:0.6rem; letter-spacing:0.14em; color:rgba(255,255,255,0.5); text-transform:uppercase; margin-top:0.2rem; }
+
+@media (max-width:640px) {
+  nav { padding:1rem 1.1rem; }
+  .nav-cta { padding:0.55rem 1.1rem; font-size:0.68rem; }
+  .nav-logo { font-size:1.4rem; }
+  .wrap { padding:7rem 1.1rem 3rem; }
+  footer { flex-direction:column; align-items:flex-start; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo-group">
+    <a href="index.html" class="nav-logo">Ajor<span>in</span></a>
+    <div class="nav-sublinks">
+      <a href="dashboard.html">Dashboard</a>
+      <span>·</span>
+      <a href="#" onclick="handleLogout(); return false;">Log Out</a>
+    </div>
+  </div>
+  <a href="dashboard.html" class="nav-cta">Back to Dashboard</a>
+</nav>
+
+<div class="wrap">
+  <div class="hdr">
+    <p class="hdr-eyebrow">My Profile</p>
+    <h1 class="hdr-title" id="greetingTitle">Loading<em>...</em></h1>
+    <p class="hdr-sub">This is everything Ajorin knows about you.</p>
+  </div>
+
+  <div id="profileFields">
+    <p class="loading-msg">Loading your profile...</p>
+  </div>
+
+  <div class="action-row">
+    <a href="onboarding.html" class="btn-secondary">Retake the Quiz</a>
+    <a href="dashboard.html" class="btn-primary">Back to Dashboard</a>
+  </div>
+</div>
+
+<footer>
+  <div>
+    <div class="footer-logo">Ajor<span>in</span></div>
+    <div class="footer-tag">See the world in your own way</div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = 'https://jxjuccgnmzdqkhnhlaki.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_7U6STmfyHYQLGda-BgViYA_bj9PnAFl';
+const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function handleLogout() {
+  await sbClient.auth.signOut();
+  window.location.href = 'index.html';
+}
+
+const fieldLabels = {
+  cultures: 'Culture / Heritage',
+  interests: 'Interests',
+  pace: 'Pace',
+  food: 'Food Philosophy',
+  dietary: 'Dietary Needs',
+  culture_draw: 'What You\\'re Drawn To',
+  social: 'Social Style',
+  planning_style: 'Planning Style',
+  purpose: 'Purpose',
+  budget: 'Spending Style',
+  becoming: 'Who You\\'re Becoming',
+  wants_community: 'Community Preference',
+  checkin_frequency: 'How Often We Check In'
+};
+
+function renderField(label, value) {
+  const isEmpty = !value || value.trim() === '';
+  return `
+    <div class="field-card">
+      <div class="field-lbl">${label}</div>
+      <div class="field-val ${isEmpty ? 'empty' : ''}">${isEmpty ? 'Not answered' : value}</div>
+    </div>
+  `;
+}
+
+async function loadProfile() {
+  const { data: { session } } = await sbClient.auth.getSession();
+
+  if (!session) {
+    window.location.href = 'onboarding.html';
+    return;
+  }
+
+  const userEmail = session.user.email;
+  document.getElementById('greetingTitle').innerHTML = `Hey <em>there.</em>`;
+
+  const { data: rows, error } = await sbClient
+    .from('profiles')
+    .select('*')
+    .eq('email', userEmail)
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  const container = document.getElementById('profileFields');
+
+  if (error || !rows || rows.length === 0) {
+    container.innerHTML = `<p class="loading-msg">We couldn't find a saved profile for this account yet.</p>`;
+    return;
+  }
+
+  const profile = rows[0];
+  document.getElementById('greetingTitle').innerHTML = `Hey <em>${profile.name || 'there'}.</em>`;
+
+  let html = '';
+  Object.keys(fieldLabels).forEach(key => {
+    html += renderField(fieldLabels[key], profile[key]);
+  });
+
+  container.innerHTML = html;
+}
+
+loadProfile();
+</script>
+</body>
+</html>
