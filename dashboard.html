@@ -680,23 +680,27 @@ function getCommunityRec(city) {
 // Calls the real backend — Google Places (live venues) + Gemini (matching) —
 // falls back to the static briefLibrary if anything goes wrong, so the page
 // never breaks even if the API is briefly unavailable.
+function buildProfilePayload() {
+  return {
+    name: mockUserName || '',
+    cultures: selectedCultures.join(', '),
+    interests: selectedInterests.join(', '),
+    pace: answers.pace || '',
+    food: (multiAnswers.food || []).join(', '),
+    dietary: selectedDietary.join(', '),
+    culture_draw: (multiAnswers.cultureDraw || []).join(', '),
+    social: answers.social || '',
+    planning_style: answers.plan || '',
+    purpose: answers.purpose || '',
+    budget: answers.budget || '',
+    becoming: selectedBecoming.join(', ')
+  };
+}
+
 async function fetchLiveBrief(city) {
   briefLoading = true;
   try {
-    const profile = {
-      name: mockUserName || '',
-      cultures: selectedCultures.join(', '),
-      interests: selectedInterests.join(', '),
-      pace: answers.pace || '',
-      food: (multiAnswers.food || []).join(', '),
-      dietary: selectedDietary.join(', '),
-      culture_draw: (multiAnswers.cultureDraw || []).join(', '),
-      social: answers.social || '',
-      planning_style: answers.plan || '',
-      purpose: answers.purpose || '',
-      budget: answers.budget || '',
-      becoming: selectedBecoming.join(', ')
-    };
+    const profile = buildProfilePayload();
 
     const res = await fetch('/api/generate-brief', {
       method: 'POST',
@@ -716,6 +720,47 @@ async function fetchLiveBrief(city) {
   }
   briefLoading = false;
   render();
+}
+
+let extendLoading = false;
+
+async function extendItinerary() {
+  if (extendLoading || !liveBriefData || liveBriefData === 'failed') return;
+  extendLoading = true;
+
+  const btn = document.getElementById('extendBtn');
+  if (btn) { btn.textContent = 'Finding 7 more days...'; btn.disabled = true; }
+
+  try {
+    const profile = buildProfilePayload();
+    const excludeNames = (liveBriefData.days || []).flatMap(d => (d.stops || []).map(s => s.name));
+
+    const res = await fetch('/api/generate-brief', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ city: chosenCity, profile, excludeNames })
+    });
+
+    if (!res.ok) throw new Error('API responded with ' + res.status);
+    const data = await res.json();
+    if (data.error || data.fallback || !data.days) throw new Error(data.error || 'extension failed');
+
+    liveBriefData.days = liveBriefData.days.concat(data.days);
+    window.itinDayTabsData = liveBriefData.days.map(d => ({
+      theme: d.theme || '',
+      stops: (d.stops || []).map(s => ({ category: s.category || '', name: s.name || '', why: s.why || '', about: s.about || '' }))
+    }));
+    renderBpTickets();
+  } catch (err) {
+    console.error('Extend itinerary failed:', err);
+    if (btn) { btn.textContent = 'Something went wrong \u2014 try again'; }
+    extendLoading = false;
+    return;
+  }
+
+  extendLoading = false;
+  const wrap = document.getElementById('extendWrap');
+  if (wrap) wrap.remove(); // only offer the extension once per session
 }
 
 // ══════ State machine ══════
@@ -821,7 +866,14 @@ function radiusLabel(v) {
 function updateNearbyTowns() {
   const el = document.getElementById('nearbyTownsWrap');
   if (!el) return;
-  const spots = nearbyTowns[chosenCity] || nearbyTowns.Paris;
+  const spots = nearbyTowns[chosenCity];
+  if (!spots) {
+    el.innerHTML = `
+      <div class="landmark-town">${chosenCity}</div>
+      <div class="landmark-name">We'll find real spots here once you continue</div>
+    `;
+    return;
+  }
   const fraction = (radiusValue - 1) / 24; // 0 to 1
   const idx = Math.min(spots.length - 1, Math.round(fraction * (spots.length - 1)));
   const current = spots[idx];
@@ -1309,6 +1361,7 @@ function render() {
               <div class="bp-logo">Ajor<span>in</span></div>
               <div class="bp-flightno" id="bpFlightNo">AJRN \u00b7 ${chosenCity.slice(0,3).toUpperCase()} \u00b7 D01</div>
             </div>
+            <p style="font-family:var(--mono); font-size:0.62rem; letter-spacing:0.14em; text-transform:uppercase; color:#D4C896; text-align:center; margin-bottom:0.6rem;">\U0001F44B Welcome to ${chosenCity}, ${displayName}</p>
             <div class="bp-route">
               <div class="bp-route-point"><div class="bp-route-code">${displayName.slice(0,4).toUpperCase()}</div><div class="bp-route-city">You</div></div>
               <div class="bp-route-line"><div class="bp-route-track"></div><span class="bp-plane">\u2708</span><div class="bp-route-track"></div></div>
@@ -1328,6 +1381,11 @@ function render() {
 
         <div class="bp-ticket-row" id="bpTicketRow"></div>
         <div class="bp-journey" id="bpJourney"></div>
+
+        ${usingLiveData ? `
+        <div id="extendWrap" style="text-align:center; margin:0.5rem 0 1.6rem;">
+          <button id="extendBtn" onclick="extendItinerary()" style="background:transparent; border:1px solid var(--terra); color:var(--terra); font-family:var(--sans); font-size:0.8rem; font-weight:600; padding:0.7rem 1.3rem; border-radius:8px; cursor:pointer;">Need More Days? Get 7 More \u2192</button>
+        </div>` : ''}
 
         <div class="bp-lounge">
           <div class="bp-lounge-eyebrow">\u2708 The Departure Lounge</div>
