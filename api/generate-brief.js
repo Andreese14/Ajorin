@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Use POST' });
   }
 
-  const { city, profile } = req.body || {};
+  const { city, profile, excludeNames } = req.body || {};
 
   if (!city || !profile) {
     return res.status(400).json({ error: 'Missing city or profile in request body' });
@@ -54,7 +54,7 @@ export default async function handler(req, res) {
     }
 
     // ── Step 2: Ask Gemini to bundle these into day-by-day plans + a real letter ──
-    const matched = await matchWithGemini(profile, city, candidates);
+    const matched = await matchWithGemini(profile, city, candidates, excludeNames || []);
 
     // Safety net: wherever Google Places has a real editorial summary for a
     // matched venue, prefer that over Gemini's guess — keeps "about this
@@ -115,7 +115,7 @@ async function searchPlaces(query, apiKey) {
       'X-Goog-Api-Key': apiKey,
       'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.rating,places.businessStatus,places.editorialSummary,places.types'
     },
-    body: JSON.stringify({ textQuery: query, maxResultCount: 8 })
+    body: JSON.stringify({ textQuery: query, maxResultCount: 18 })
   });
 
   if (!response.ok) {
@@ -133,8 +133,13 @@ async function searchPlaces(query, apiKey) {
   }));
 }
 
-async function matchWithGemini(profile, city, candidates) {
+async function matchWithGemini(profile, city, candidates, excludeNames) {
   const firstName = (profile.name || '').trim().split(/\s+/)[0] || 'Traveler';
+  const isExtension = excludeNames && excludeNames.length > 0;
+
+  const exclusionBlock = isExtension
+    ? `\n\nIMPORTANT: This person already has an itinerary using these venues — do NOT reuse any of them, pick entirely different ones from the list below:\n${JSON.stringify(excludeNames, null, 2)}\n`
+    : '';
 
   const prompt = `You are Ajorin, a personalized travel discovery assistant. Your voice is warm, specific, and conversational — like a knowledgeable local friend, never a generic travel guide. Never say "Day 1: Where to eat" type labels — write like you're texting a friend a real plan.
 
@@ -143,8 +148,8 @@ ${JSON.stringify(profile, null, 2)}
 
 Here is a real, current list of venues in ${city} (from Google Places, so these are genuinely open right now):
 ${JSON.stringify(candidates, null, 2)}
-
-Build a 3-day plan using ONLY the venues in the list above — never invent places not listed. Each day should bundle 3 real stops that make sense together (a food/coffee spot, a shop or market, and an activity or landmark), written with a short, warm reason each was picked for ${firstName} specifically.
+${exclusionBlock}
+Build a 7-day plan using ONLY the venues in the list above — never invent places not listed. Each day should bundle 5 real stops that make sense together for that day (a coffee spot, a meal, a shop or market, an activity or landmark, and one "local secret" pick), written with a short, warm reason each was picked for ${firstName} specifically. Do not repeat the same venue across different days.
 
 For each stop, also include a short factual "about" line (1 sentence, what the place actually is) — use the venue's real summary from the list above if one exists; if it doesn't, write a brief, honest factual description based only on its name and category, without inventing specific claims you can't support.
 
@@ -158,15 +163,17 @@ Return STRICT JSON, no markdown, no commentary, in exactly this shape:
       "theme": "A short, warm 4-6 word theme for this day",
       "stops": [
         { "category": "Coffee", "name": "Venue Name From The List", "why": "One warm sentence, specific to ${firstName}", "about": "One factual sentence about what this place is" },
+        { "category": "Food", "name": "Venue Name From The List", "why": "One warm sentence", "about": "One factual sentence" },
         { "category": "Shopping", "name": "Venue Name From The List", "why": "One warm sentence", "about": "One factual sentence" },
-        { "category": "Activity", "name": "Venue Name From The List", "why": "One warm sentence", "about": "One factual sentence" }
+        { "category": "Activity", "name": "Venue Name From The List", "why": "One warm sentence", "about": "One factual sentence" },
+        { "category": "Local Secret", "name": "Venue Name From The List", "why": "One warm sentence explaining why this is the standout, lesser-known pick of the day", "about": "One factual sentence" }
       ]
     }
   ],
   "letter": "The genuinely unique closing letter text, 3-5 sentences, in ${city}'s own voice."
 }
 
-Include exactly 3 day objects.`;
+Include exactly 7 day objects, each with exactly 5 stops.`;
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${process.env.GEMINI_API_KEY}`,
