@@ -37,13 +37,15 @@ export default async function handler(req, res) {
 
   try {
     // ── Step 1: Pull real, current venues across five categories ──
-    const [foodResults, shopResults, activityResults, cultureResults, recreationResults] = await Promise.all([
+    const recreationQueries = await buildRecreationQueries(profile, city);
+    const [foodResults, shopResults, activityResults, cultureResults, ...recreationResultSets] = await Promise.all([
       searchPlaces(buildFoodQuery(profile, city), GOOGLE_KEY),
       searchPlaces(buildShopQuery(profile, city), GOOGLE_KEY),
       searchPlaces(buildActivityQuery(profile, city), GOOGLE_KEY),
       searchPlaces(buildCultureQuery(profile, city), GOOGLE_KEY),
-      searchPlaces(buildRecreationQuery(profile, city), GOOGLE_KEY)
+      ...recreationQueries.map(q => searchPlaces(q, GOOGLE_KEY))
     ]);
+    const recreationResults = recreationResultSets.flat();
 
     const candidates = [...foodResults, ...shopResults, ...activityResults, ...cultureResults, ...recreationResults]
       .filter(p => p.businessStatus !== 'CLOSED_PERMANENTLY');
@@ -109,30 +111,34 @@ function buildActivityQuery(profile, city) {
   return `top rated things to do in ${city}`;
 }
 
-function buildRecreationQuery(profile, city) {
+async function buildRecreationQueries(profile, city) {
   const interests = (profile.interests || '').toLowerCase();
   const pace = (profile.pace || '').toLowerCase();
 
-  if (interests.includes('tennis')) return `public tennis courts in ${city}`;
-  if (interests.includes('golf')) return `public golf courses in ${city}`;
-  if (interests.includes('hiking')) return `best hiking trails near ${city}`;
-  if (interests.includes('running')) return `best running routes and trails in ${city}`;
-  if (interests.includes('cycling')) return `bike trails and cycling routes in ${city}`;
-  if (interests.includes('yoga') || interests.includes('pilates')) return `yoga and pilates studios in ${city}`;
-  if (interests.includes('water sports')) return `water sports and paddleboarding in ${city}`;
-  if (interests.includes('skiing')) return `ski resorts near ${city}`;
-  if (interests.includes('climbing')) return `rock climbing gyms in ${city}`;
-  if (interests.includes('camping')) return `campgrounds near ${city}`;
-  if (interests.includes('beaches')) return `best beaches near ${city}`;
-  if (interests.includes('photography')) return `most photogenic spots and viewpoints in ${city}`;
-  if (interests.includes('board games') || interests.includes('trivia')) return `board game cafes and trivia nights in ${city}`;
-  if (interests.includes('live sports')) return `sports bars and stadiums in ${city}`;
-  if (interests.includes('team sports')) return `recreational sports leagues and fields in ${city}`;
-  if (interests.includes('wellness') || interests.includes('spa')) return `spas and wellness centers in ${city}`;
+  const matches = [];
+  if (interests.includes('tennis')) matches.push(`public tennis courts in ${city}`);
+  if (interests.includes('golf')) matches.push(`public golf courses in ${city}`);
+  if (interests.includes('hiking')) matches.push(`best hiking trails near ${city}`);
+  if (interests.includes('running')) matches.push(`best running routes and trails in ${city}`);
+  if (interests.includes('cycling')) matches.push(`bike trails and cycling routes in ${city}`);
+  if (interests.includes('yoga') || interests.includes('pilates')) matches.push(`yoga and pilates studios in ${city}`);
+  if (interests.includes('water sports')) matches.push(`water sports and paddleboarding in ${city}`);
+  if (interests.includes('skiing')) matches.push(`ski resorts near ${city}`);
+  if (interests.includes('climbing')) matches.push(`rock climbing gyms in ${city}`);
+  if (interests.includes('camping')) matches.push(`campgrounds near ${city}`);
+  if (interests.includes('beaches')) matches.push(`best beaches near ${city}`);
+  if (interests.includes('photography')) matches.push(`most photogenic spots and viewpoints in ${city}`);
+  if (interests.includes('board games') || interests.includes('trivia')) matches.push(`board game cafes and trivia nights in ${city}`);
+  if (interests.includes('live sports')) matches.push(`sports bars and stadiums in ${city}`);
+  if (interests.includes('team sports')) matches.push(`recreational sports leagues and fields in ${city}`);
+  if (interests.includes('wellness') || interests.includes('spa')) matches.push(`spas and wellness centers in ${city}`);
 
-  // No specific recreational signal — fall back to something matching their general pace
-  if (pace.includes('walk')) return `best walkable parks and green spaces in ${city}`;
-  return `popular outdoor activities in ${city}`;
+  if (matches.length === 0) {
+    matches.push(pace.includes('walk') ? `best walkable parks and green spaces in ${city}` : `popular outdoor activities in ${city}`);
+  }
+
+  // Cap at 3 distinct recreation searches so this doesn't balloon API calls if someone selects many interests
+  return matches.slice(0, 3);
 }
 
 function buildCultureQuery(profile, city) {
