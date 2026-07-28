@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Shared Discovery Brief — Ajorin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',system-ui,sans-serif;background:#0B0B0F;color:#F7F4EE;font-size:16px;line-height:1.5}
+:root{
+  --ink:#0B0B0F; --white:#FFFFFF; --terra:#5C5CA8; --gold:#B8963E; --mist:rgba(255,255,255,0.12); --fog:#9E9A93;
+  --serif:'Cormorant Garamond',Georgia,serif; --sans:'DM Sans',system-ui,sans-serif; --mono:'DM Mono',monospace;
+}
+.bp-wrap{max-width:480px;margin:0 auto;padding:2rem 1rem 4rem}
+
+.top-logo{text-align:center;margin-bottom:1.5rem;font-family:var(--serif);font-size:1.4rem;font-weight:600}
+.top-logo span{color:var(--terra)}
+.top-note{text-align:center;font-family:var(--mono);font-size:0.6rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fog);margin-bottom:2rem}
+
+.bp-pass{background:var(--white);color:var(--ink);border-radius:18px;box-shadow:0 16px 40px rgba(0,0,0,0.35);overflow:hidden;margin-bottom:1.6rem}
+.bp-top{background-size:cover;background-position:center;position:relative;padding:1.4rem 1.5rem 1.6rem}
+.bp-top::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg, rgba(92,92,168,0.88) 0%, rgba(24,24,24,0.82) 100%)}
+.bp-top > *{position:relative;z-index:1}
+.bp-brand{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem}
+.bp-logo{font-family:var(--serif);font-size:1.15rem;font-weight:600;color:#fff}
+.bp-logo span{color:#D4C896}
+.bp-flightno{font-family:var(--mono);font-size:0.65rem;letter-spacing:0.06em;color:rgba(255,255,255,0.75)}
+.bp-welcome{font-family:var(--mono);font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:#D4C896;text-align:center;margin-bottom:0.6rem}
+.bp-route{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.3rem}
+.bp-route-point{text-align:center}
+.bp-route-code{font-family:var(--serif);font-size:1.9rem;font-style:italic;color:#fff;line-height:1}
+.bp-route-city{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.05em;text-transform:uppercase;color:rgba(255,255,255,0.7);margin-top:0.2rem}
+.bp-route-line{flex:1;display:flex;align-items:center;padding:0 0.8rem;position:relative;top:-8px}
+.bp-route-track{flex:1;height:1px;background:repeating-linear-gradient(to right, rgba(255,255,255,0.6) 0, rgba(255,255,255,0.6) 4px, transparent 4px, transparent 8px)}
+.bp-plane{font-size:1rem;transform:rotate(90deg);margin:0 0.3rem}
+.bp-perf{position:relative;height:0;border-top:2px dashed var(--mist);margin:0}
+.bp-perf::before,.bp-perf::after{content:'';position:absolute;top:-11px;width:22px;height:22px;border-radius:50%;background:var(--ink)}
+.bp-perf::before{left:-11px}
+.bp-perf::after{right:-11px}
+.bp-stub{padding:1.1rem 1.5rem;display:flex;justify-content:space-between;align-items:center}
+.bp-stub-item{text-align:center}
+.bp-stub-lbl{font-family:var(--mono);font-size:0.55rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--fog)}
+.bp-stub-val{font-family:var(--serif);font-size:1.15rem;font-style:italic;color:var(--terra);margin-top:0.15rem}
+.bp-stub-div{width:1px;height:28px;background:var(--mist)}
+
+.bp-ticket-row{display:flex;gap:0.6rem;margin-bottom:1.6rem;overflow-x:auto;padding-bottom:0.3rem}
+.bp-ticket{flex-shrink:0;position:relative;background:var(--white);color:var(--ink);border:1.5px solid var(--mist);border-radius:10px;padding:0.55rem 1rem 0.55rem 1.3rem;cursor:pointer}
+.bp-ticket::before{content:'';position:absolute;left:-5px;top:50%;transform:translateY(-50%);width:10px;height:10px;border-radius:50%;background:var(--ink);border:1.5px solid var(--mist)}
+.bp-ticket.active{background:var(--terra);border-color:var(--terra)}
+.bp-ticket.active::before{border-color:var(--terra)}
+.bp-ticket-day{font-family:var(--mono);font-size:0.58rem;color:var(--fog);text-transform:uppercase}
+.bp-ticket.active .bp-ticket-day{color:rgba(255,255,255,0.75)}
+.bp-ticket-theme{font-family:var(--serif);font-size:0.85rem;font-style:italic;color:var(--ink);white-space:nowrap}
+.bp-ticket.active .bp-ticket-theme{color:#fff}
+
+.bp-journey{position:relative;padding-left:0.5rem}
+.bp-journey-track{position:absolute;left:33px;top:28px;bottom:28px;width:1.5px;background:repeating-linear-gradient(to bottom, var(--terra) 0, var(--terra) 5px, transparent 5px, transparent 10px)}
+.bp-stop{display:flex;gap:1rem;margin-bottom:1.3rem;position:relative}
+.bp-stop-marker{width:66px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding-top:0.3rem}
+.bp-stop-dot{width:14px;height:14px;border-radius:50%;background:var(--terra);border:3px solid var(--ink);box-shadow:0 0 0 1.5px var(--terra)}
+.bp-stop.bp-final .bp-stop-dot{background:var(--gold);box-shadow:0 0 0 1.5px var(--gold)}
+.bp-stop-card{flex:1;background:var(--white);color:var(--ink);border:1px solid var(--mist);border-radius:14px;overflow:hidden}
+.bp-stop-head{display:flex;gap:0.7rem;align-items:center;padding:0.9rem 1rem 0.3rem}
+.bp-stop-icon{width:36px;height:36px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.bp-stop-cat{font-family:var(--mono);font-size:0.56rem;font-weight:600;color:var(--terra);text-transform:uppercase;letter-spacing:0.03em}
+.bp-stop-name{font-family:var(--serif);font-size:1.08rem;font-weight:500;color:var(--ink)}
+.bp-stop-name a{color:var(--terra)}
+.bp-expand{display:flex;align-items:center;gap:0.3rem;background:none;border:none;color:var(--gold);font-family:var(--mono);font-size:0.62rem;letter-spacing:0.03em;text-transform:uppercase;font-weight:600;cursor:pointer;padding:0.5rem 1rem 1rem;width:100%;text-align:left}
+.bp-expand .bp-chev{transition:transform 0.2s;font-size:0.75rem}
+.bp-expand.open .bp-chev{transform:rotate(180deg)}
+.bp-panel{max-height:0;overflow:hidden;transition:max-height 0.25s ease}
+.bp-panel.open{max-height:320px}
+.bp-panel-inner{padding:0 1rem 1rem}
+.bp-why-box{background:#FBF3E3;border-radius:9px;padding:0.7rem 0.85rem;margin-bottom:0.55rem}
+.bp-why-lbl{font-family:var(--mono);font-size:0.58rem;font-weight:700;color:var(--gold);text-transform:uppercase;display:block;margin-bottom:0.25rem}
+.bp-why-txt{font-size:0.82rem;color:#3a3a3a;line-height:1.5}
+.bp-about-lbl{font-family:var(--mono);font-size:0.58rem;font-weight:700;color:var(--terra);text-transform:uppercase;display:block;margin-bottom:0.25rem;margin-top:0.5rem}
+.bp-about-txt{font-size:0.82rem;color:var(--fog);line-height:1.5}
+
+.bp-lounge{margin-top:0.6rem;background:linear-gradient(155deg,#3a3a70,#181818);border-radius:16px;padding:1.4rem 1.3rem;position:relative;overflow:hidden}
+.bp-lounge-eyebrow{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.14em;text-transform:uppercase;color:#D4C896;margin-bottom:0.5rem}
+.bp-lounge-title{font-family:var(--serif);font-size:1.15rem;font-style:italic;color:#fff;margin-bottom:0.6rem}
+.bp-lounge-desc{font-size:0.82rem;color:rgba(255,255,255,0.75);line-height:1.5;margin-bottom:0.9rem}
+.bp-lounge-btn{display:inline-block;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;font-family:var(--sans);font-size:0.78rem;font-weight:600;padding:0.55rem 1.1rem;border-radius:8px;text-decoration:none}
+
+.letter-card{background:var(--ink);border:1px solid var(--mist);border-radius:12px;padding:1.8rem 1.6rem;margin-top:1.2rem;text-align:center}
+.letter-lbl{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--terra);margin-bottom:1rem}
+.letter-text{font-family:var(--serif);font-style:italic;font-size:1.05rem;color:var(--white);line-height:1.9;white-space:pre-line;max-width:460px;margin:0 auto 0.8rem}
+.letter-sign{font-family:var(--serif);font-style:italic;font-size:1rem;color:var(--terra)}
+
+.bottom-cta{text-align:center;margin-top:2.5rem}
+.bottom-cta a{display:inline-block;background:var(--terra);color:#fff;font-family:var(--sans);font-weight:600;font-size:0.85rem;padding:0.9rem 1.8rem;border-radius:10px;text-decoration:none}
+.loading-msg{text-align:center;color:var(--fog);font-family:var(--mono);font-size:0.75rem;margin-top:3rem}
+</style>
+</head>
+<body>
+
+<div class="bp-wrap">
+  <div class="top-logo">Ajor<span>in</span></div>
+  <p class="top-note">Shared Discovery Brief</p>
+  <div id="content"><p class="loading-msg">Loading this brief...</p></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = 'https://jxjuccgnmzdqkhnhlaki.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_7U6STmfyHYQLGda-BgViYA_bj9PnAFl';
+const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const iconSvgFor = (type) => {
+  const t = (type || '').toLowerCase();
+  if (t.includes('secret')) return { emoji: '✨', bg: 'linear-gradient(155deg,#F3E3B8,#E8CE7A)' };
+  if (t.includes('shop')) return { emoji: '🛍️', bg: 'linear-gradient(155deg,#F3DCE4,#E8BFCE)' };
+  if (t.includes('coffee') || t.includes('food') || t.includes('eat') || t.includes('restaurant')) return { emoji: '☕', bg: 'linear-gradient(155deg,#F4E3C1,#E8CE95)' };
+  return { emoji: '🚶', bg: 'linear-gradient(155deg,#DEDCF0,#C4C0E8)' };
+};
+
+function placeLink(name, city) {
+  const url = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(name + ' ' + city);
+  return `<a href="${url}" target="_blank" rel="noopener">${name}</a>`;
+}
+
+let dayTabs = [];
+let activeDay = 0;
+let briefCity = '';
+
+function renderTickets() {
+  const el = document.getElementById('ticketRow');
+  el.innerHTML = '';
+  dayTabs.forEach((d, i) => {
+    const t = document.createElement('div');
+    t.className = 'bp-ticket' + (i === activeDay ? ' active' : '');
+    t.innerHTML = `<div class="bp-ticket-day">Day ${String(i+1).padStart(2,'0')}</div><div class="bp-ticket-theme">${d.theme}</div>`;
+    t.onclick = () => { activeDay = i; renderTickets(); renderJourney(); };
+    el.appendChild(t);
+  });
+}
+
+function renderJourney() {
+  const flightEl = document.getElementById('flightNo');
+  if (flightEl) flightEl.textContent = `AJRN · ${briefCity.slice(0,3).toUpperCase()} · D${String(activeDay+1).padStart(2,'0')}`;
+
+  const el = document.getElementById('journey');
+  const day = dayTabs[activeDay];
+  if (!day) { el.innerHTML = ''; return; }
+
+  let html = '<div class="bp-journey-track"></div>';
+  day.stops.forEach((s, sIdx) => {
+    const isFinal = sIdx === day.stops.length - 1;
+    const icon = iconSvgFor(s.type);
+    const hasWhy = !!(s.why && s.why.trim());
+    const hasAbout = !!(s.about && s.about.trim());
+    const cardId = `stop-${activeDay}-${sIdx}`;
+    html += `
+      <div class="bp-stop ${isFinal ? 'bp-final' : ''}">
+        <div class="bp-stop-marker"><div class="bp-stop-dot"></div></div>
+        <div class="bp-stop-card">
+          <div class="bp-stop-head">
+            <div class="bp-stop-icon" style="background:${icon.bg};">${icon.emoji}</div>
+            <div><div class="bp-stop-cat">${s.label || s.category || ''}</div><div class="bp-stop-name">${placeLink(s.name, briefCity)}</div></div>
+          </div>
+          ${(hasWhy || hasAbout) ? `
+          <button class="bp-expand" onclick="toggleExpand(this)"><span class="bp-chev">▾</span> Why We Chose This</button>
+          <div class="bp-panel">
+            <div class="bp-panel-inner">
+              ${hasWhy ? `<div class="bp-why-box"><span class="bp-why-lbl">🎯 Why Ajorin Picked This</span><span class="bp-why-txt">${s.why}</span></div>` : ''}
+              ${hasAbout ? `<span class="bp-about-lbl">About This Place</span><span class="bp-about-txt">${s.about}</span>` : ''}
+            </div>
+          </div>` : ''}
+        </div>
+      </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function toggleExpand(btn) {
+  const panel = btn.nextElementSibling;
+  const isOpen = panel.classList.contains('open');
+  btn.classList.toggle('open', !isOpen);
+  panel.classList.toggle('open', !isOpen);
+}
+
+async function loadBrief() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  const contentEl = document.getElementById('content');
+
+  if (!id) {
+    contentEl.innerHTML = '<p class="loading-msg">No brief ID was provided.</p>';
+    return;
+  }
+
+  const { data, error } = await sbClient
+    .from('shared_briefs')
+    .select('*')
+    .eq('share_id', id)
+    .limit(1);
+
+  if (error || !data || data.length === 0) {
+    contentEl.innerHTML = '<p class="loading-msg">This brief could not be found — it may have expired or the link is incorrect.</p>';
+    return;
+  }
+
+  const brief = data[0];
+  briefCity = brief.city;
+  dayTabs = JSON.parse(brief.day_tabs_json || '[]');
+
+  contentEl.innerHTML = `
+    <div class="bp-pass">
+      <div class="bp-top" style="background-image:url('${brief.city_photo || ''}');">
+        <div class="bp-brand">
+          <div class="bp-logo">Ajor<span>in</span></div>
+          <div class="bp-flightno" id="flightNo">AJRN · ${briefCity.slice(0,3).toUpperCase()} · D01</div>
+        </div>
+        <p class="bp-welcome">👋 ${brief.display_name}'s Discovery Brief for ${briefCity}</p>
+        <div class="bp-route">
+          <div class="bp-route-point"><div class="bp-route-code">${(brief.display_name || 'YOU').slice(0,4).toUpperCase()}</div><div class="bp-route-city">Traveler</div></div>
+          <div class="bp-route-line"><div class="bp-route-track"></div><span class="bp-plane">✈</span><div class="bp-route-track"></div></div>
+          <div class="bp-route-point"><div class="bp-route-code">${briefCity.slice(0,3).toUpperCase()}</div><div class="bp-route-city">${briefCity}</div></div>
+        </div>
+      </div>
+      <div class="bp-perf"></div>
+      <div class="bp-stub">
+        <div class="bp-stub-item"><div class="bp-stub-lbl">Match</div><div class="bp-stub-val">${brief.match_score}%</div></div>
+        <div class="bp-stub-div"></div>
+        <div class="bp-stub-item"><div class="bp-stub-lbl">Picks</div><div class="bp-stub-val">${dayTabs.reduce((n,d)=>n+d.stops.length,0)}</div></div>
+        <div class="bp-stub-div"></div>
+        <div class="bp-stub-item"><div class="bp-stub-lbl">Days</div><div class="bp-stub-val">${dayTabs.length}</div></div>
+      </div>
+    </div>
+
+    <div class="bp-ticket-row" id="ticketRow"></div>
+    <div class="bp-journey" id="journey"></div>
+
+    <div class="bp-lounge">
+      <div class="bp-lounge-eyebrow">✈ The Departure Lounge</div>
+      <div class="bp-lounge-title">You're not alone here.</div>
+      <div class="bp-lounge-desc">${brief.community_desc}</div>
+      <a href="${brief.community_link}" target="_blank" rel="noopener" class="bp-lounge-btn">${brief.community_name} →</a>
+    </div>
+
+    <div class="letter-card">
+      <div class="letter-lbl">A Letter From ${briefCity}</div>
+      <div class="letter-text">${brief.letter_body}</div>
+      <div class="letter-sign">— ${briefCity}</div>
+    </div>
+
+    <div class="bottom-cta">
+      <a href="onboarding.html">Get Your Own Discovery Brief →</a>
+    </div>
+  `;
+
+  renderTickets();
+  renderJourney();
+}
+
+loadBrief();
+</script>
+
+</body>
+</html>
