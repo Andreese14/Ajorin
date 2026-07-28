@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Use POST' });
   }
 
-  const { city, profile, excludeNames } = req.body || {};
+  const { city, profile, excludeNames, tripDuration } = req.body || {};
 
   if (!city || !profile) {
     return res.status(400).json({ error: 'Missing city or profile in request body' });
@@ -58,7 +58,8 @@ export default async function handler(req, res) {
     }
 
     // ── Step 2: Ask Gemini to bundle these into day-by-day plans + a real letter ──
-    const matched = await matchWithGemini(profile, city, candidates, excludeNames || []);
+    const dayCount = resolveDayCount(tripDuration);
+    const matched = await matchWithGemini(profile, city, candidates, excludeNames || [], dayCount);
 
     // Safety net: wherever Google Places has a real editorial summary for a
     // matched venue, prefer that over Gemini's guess — keeps "about this
@@ -83,6 +84,19 @@ export default async function handler(req, res) {
 }
 
 // ── Query builders ──
+
+// Maps the selected trip length to an actual number of days to generate.
+// "Month or More" is capped at 14 for now on the free path — anything
+// beyond that is exactly what the "Get 7 More Days" extension button is for,
+// which is also the natural place to introduce paid tiers later.
+function resolveDayCount(tripDuration) {
+  const d = (tripDuration || '').toLowerCase();
+  if (d.includes('few days')) return 3;
+  if (d.includes('one week')) return 7;
+  if (d.includes('two weeks')) return 14;
+  if (d.includes('month')) return 14; // capped — use "Get 7 More Days" for anything beyond this
+  return 7; // sensible default if duration wasn't provided
+}
 
 function buildFoodQuery(profile, city) {
   const dietary = (profile.dietary || '').toLowerCase();
@@ -210,7 +224,7 @@ async function searchPlaces(query, apiKey) {
   }));
 }
 
-async function matchWithGemini(profile, city, candidates, excludeNames) {
+async function matchWithGemini(profile, city, candidates, excludeNames, dayCount) {
   const firstName = (profile.name || '').trim().split(/\s+/)[0] || 'Traveler';
   const isExtension = excludeNames && excludeNames.length > 0;
 
@@ -226,7 +240,7 @@ ${JSON.stringify(profile, null, 2)}
 Here is a real, current list of venues in ${city} (from Google Places, so these are genuinely open right now):
 ${JSON.stringify(candidates, null, 2)}
 ${exclusionBlock}
-Build a 7-day plan using ONLY the venues in the list above — never invent places not listed. Each day should bundle 5 real stops that make sense together for that day (a coffee spot, a meal, a shop or market, an activity or landmark, and one "local secret" pick), written with a short, warm reason each was picked for ${firstName} specifically. Do not repeat the same venue across different days.
+Build a ${dayCount}-day plan using ONLY the venues in the list above — never invent places not listed. Each day should bundle 5 real stops that make sense together for that day (a coffee spot, a meal, a shop or market, an activity or landmark, and one "local secret" pick), written with a short, warm reason each was picked for ${firstName} specifically. Do not repeat the same venue across different days.
 
 If this person's profile states a specific culture or heritage, treat that as a real signal — actively look for and prioritize any venues in the list above that connect to it (restaurants, markets, cultural spots), rather than defaulting only to generic popular picks. Don't force it if nothing relevant exists in the list, but don't ignore it either.
 
@@ -252,7 +266,7 @@ Return STRICT JSON, no markdown, no commentary, in exactly this shape:
   "letter": "The genuinely unique closing letter text, 3-5 sentences, in ${city}'s own voice."
 }
 
-The "type" field must always be exactly one of: Coffee, Food, Shopping, Activity, Secret \u2014 this is used internally and never shown to the user. The "label" field is what the user actually sees, so make it warm and specific to that exact stop, not a repeated generic word. Include exactly 7 day objects, each with exactly 5 stops.`;
+The "type" field must always be exactly one of: Coffee, Food, Shopping, Activity, Secret \u2014 this is used internally and never shown to the user. The "label" field is what the user actually sees, so make it warm and specific to that exact stop, not a repeated generic word. Include exactly ${dayCount} day objects, each with exactly 5 stops.`;
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${process.env.GEMINI_API_KEY}`,
