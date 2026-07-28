@@ -36,14 +36,16 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ── Step 1: Pull real, current venues across three categories ──
-    const [foodResults, shopResults, activityResults] = await Promise.all([
+    // ── Step 1: Pull real, current venues across five categories ──
+    const [foodResults, shopResults, activityResults, cultureResults, recreationResults] = await Promise.all([
       searchPlaces(buildFoodQuery(profile, city), GOOGLE_KEY),
       searchPlaces(buildShopQuery(profile, city), GOOGLE_KEY),
-      searchPlaces(buildActivityQuery(profile, city), GOOGLE_KEY)
+      searchPlaces(buildActivityQuery(profile, city), GOOGLE_KEY),
+      searchPlaces(buildCultureQuery(profile, city), GOOGLE_KEY),
+      searchPlaces(buildRecreationQuery(profile, city), GOOGLE_KEY)
     ]);
 
-    const candidates = [...foodResults, ...shopResults, ...activityResults]
+    const candidates = [...foodResults, ...shopResults, ...activityResults, ...cultureResults, ...recreationResults]
       .filter(p => p.businessStatus !== 'CLOSED_PERMANENTLY');
 
     if (candidates.length === 0) {
@@ -107,6 +109,75 @@ function buildActivityQuery(profile, city) {
   return `top rated things to do in ${city}`;
 }
 
+function buildRecreationQuery(profile, city) {
+  const interests = (profile.interests || '').toLowerCase();
+  const pace = (profile.pace || '').toLowerCase();
+
+  if (interests.includes('tennis')) return `public tennis courts in ${city}`;
+  if (interests.includes('golf')) return `public golf courses in ${city}`;
+  if (interests.includes('hiking')) return `best hiking trails near ${city}`;
+  if (interests.includes('running')) return `best running routes and trails in ${city}`;
+  if (interests.includes('cycling')) return `bike trails and cycling routes in ${city}`;
+  if (interests.includes('yoga') || interests.includes('pilates')) return `yoga and pilates studios in ${city}`;
+  if (interests.includes('water sports')) return `water sports and paddleboarding in ${city}`;
+  if (interests.includes('skiing')) return `ski resorts near ${city}`;
+  if (interests.includes('climbing')) return `rock climbing gyms in ${city}`;
+  if (interests.includes('camping')) return `campgrounds near ${city}`;
+  if (interests.includes('beaches')) return `best beaches near ${city}`;
+  if (interests.includes('photography')) return `most photogenic spots and viewpoints in ${city}`;
+  if (interests.includes('board games') || interests.includes('trivia')) return `board game cafes and trivia nights in ${city}`;
+  if (interests.includes('live sports')) return `sports bars and stadiums in ${city}`;
+  if (interests.includes('team sports')) return `recreational sports leagues and fields in ${city}`;
+  if (interests.includes('wellness') || interests.includes('spa')) return `spas and wellness centers in ${city}`;
+
+  // No specific recreational signal — fall back to something matching their general pace
+  if (pace.includes('walk')) return `best walkable parks and green spaces in ${city}`;
+  return `popular outdoor activities in ${city}`;
+}
+
+function buildCultureQuery(profile, city) {
+  const cultures = (profile.cultures || '').toLowerCase();
+
+  if (cultures.includes('african american') || cultures.includes('black american')) {
+    return `Black-owned restaurants and businesses in ${city}`;
+  }
+  if (cultures.includes('african heritage')) {
+    return `African restaurants and African diaspora community spots in ${city}`;
+  }
+  if (cultures.includes('caribbean')) {
+    return `Caribbean restaurants and markets in ${city}`;
+  }
+  if (cultures.includes('latino') || cultures.includes('hispanic') || cultures.includes('central american')) {
+    return `Latin American and Hispanic restaurants and markets in ${city}`;
+  }
+  if (cultures.includes('arab') || cultures.includes('middle eastern')) {
+    return `Middle Eastern and Arab restaurants and markets in ${city}`;
+  }
+  if (cultures.includes('east asian')) {
+    return `East Asian restaurants and markets in ${city}`;
+  }
+  if (cultures.includes('south asian')) {
+    return `South Asian restaurants and markets in ${city}`;
+  }
+  if (cultures.includes('southeast asian')) {
+    return `Southeast Asian restaurants and markets in ${city}`;
+  }
+  if (cultures.includes('indigenous') || cultures.includes('native')) {
+    return `Indigenous and Native-owned businesses and cultural sites in ${city}`;
+  }
+  if (cultures.includes('eastern european')) {
+    return `Eastern European restaurants and markets in ${city}`;
+  }
+  if (cultures.includes('western european') || cultures.includes('northern european') || cultures.includes('southern european')) {
+    return `European restaurants and specialty markets in ${city}`;
+  }
+  if (cultures.includes('pacific islander')) {
+    return `Pacific Islander restaurants and cultural spots in ${city}`;
+  }
+  // No specific heritage signal — fall back to a general cultural/community search
+  return `cultural centers and community organizations in ${city}`;
+}
+
 async function searchPlaces(query, apiKey) {
   const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
     method: 'POST',
@@ -151,6 +222,8 @@ ${JSON.stringify(candidates, null, 2)}
 ${exclusionBlock}
 Build a 7-day plan using ONLY the venues in the list above — never invent places not listed. Each day should bundle 5 real stops that make sense together for that day (a coffee spot, a meal, a shop or market, an activity or landmark, and one "local secret" pick), written with a short, warm reason each was picked for ${firstName} specifically. Do not repeat the same venue across different days.
 
+If this person's profile states a specific culture or heritage, treat that as a real signal — actively look for and prioritize any venues in the list above that connect to it (restaurants, markets, cultural spots), rather than defaulting only to generic popular picks. Don't force it if nothing relevant exists in the list, but don't ignore it either.
+
 For each stop, also include a short factual "about" line (1 sentence, what the place actually is) — use the venue's real summary from the list above if one exists; if it doesn't, write a brief, honest factual description based only on its name and category, without inventing specific claims you can't support.
 
 Also write a short, genuinely unique closing letter "from" ${city} itself — personal, specific to what this profile seems to actually want, NOT a generic "you came looking for X" template. Make it feel like it could only be written for ${city}, referencing something true and specific about the city's actual character.
@@ -162,18 +235,18 @@ Return STRICT JSON, no markdown, no commentary, in exactly this shape:
     {
       "theme": "A short, warm 4-6 word theme for this day",
       "stops": [
-        { "category": "Coffee", "name": "Venue Name From The List", "why": "One warm sentence, specific to ${firstName}", "about": "One factual sentence about what this place is" },
-        { "category": "Food", "name": "Venue Name From The List", "why": "One warm sentence", "about": "One factual sentence" },
-        { "category": "Shopping", "name": "Venue Name From The List", "why": "One warm sentence", "about": "One factual sentence" },
-        { "category": "Activity", "name": "Venue Name From The List", "why": "One warm sentence", "about": "One factual sentence" },
-        { "category": "Local Secret", "name": "Venue Name From The List", "why": "One warm sentence explaining why this is the standout, lesser-known pick of the day", "about": "One factual sentence" }
+        { "type": "Coffee", "label": "A natural, varied phrase for how the day starts (e.g. 'Wake Up', 'Morning Walk', 'Slow Start', 'First Stop') \u2014 vary this across days, don't always say 'Coffee'", "name": "Venue Name From The List", "why": "One warm sentence, specific to ${firstName}", "about": "One factual sentence about what this place is" },
+        { "type": "Food", "label": "A natural phrase for this meal stop", "name": "Venue Name From The List", "why": "One warm sentence", "about": "One factual sentence" },
+        { "type": "Shopping", "label": "A natural phrase for this shopping stop", "name": "Venue Name From The List", "why": "One warm sentence", "about": "One factual sentence" },
+        { "type": "Activity", "label": "A natural phrase for this activity, tailored to what this specific stop actually is (e.g. 'Tennis Time', 'Museum Hour', 'Trail Walk') \u2014 not a generic word", "name": "Venue Name From The List", "why": "One warm sentence", "about": "One factual sentence" },
+        { "type": "Secret", "label": "Local Secret", "name": "Venue Name From The List", "why": "One warm sentence explaining why this is the standout, lesser-known pick of the day", "about": "One factual sentence" }
       ]
     }
   ],
   "letter": "The genuinely unique closing letter text, 3-5 sentences, in ${city}'s own voice."
 }
 
-Include exactly 7 day objects, each with exactly 5 stops.`;
+The "type" field must always be exactly one of: Coffee, Food, Shopping, Activity, Secret \u2014 this is used internally and never shown to the user. The "label" field is what the user actually sees, so make it warm and specific to that exact stop, not a repeated generic word. Include exactly 7 day objects, each with exactly 5 stops.`;
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${process.env.GEMINI_API_KEY}`,
